@@ -31,7 +31,7 @@ See more of the **Stakes** capabilities with:
 
 `$ Stakes --help`
 
-![INFO]
+> [!NOTE]
 > Stakes uses SQLite for its databases, allowing it to have a fast, extensible and reliable storage.
 
 ## Compiling From Source
@@ -47,10 +47,6 @@ git clone https://github.com/rodrigo-pariente/Stakes # get the source
 cd Stakes/
 dotnet build -c Release
 ```
-
-and run
-
-`$ ./Stakes`
 
 
 ## Motivation
