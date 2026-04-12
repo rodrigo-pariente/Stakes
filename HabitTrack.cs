@@ -1,10 +1,10 @@
 class HabitTrack
 {
-    public static TimeSpan GetTotalHabitEffort(int habitId)
+    public static TimeSpan GetTotalHabitEffort(string habitName)
     {
         var sum = new TimeSpan();
 
-        List<TimeSpan> effortTimes = GetHabitEfforts(habitId);
+        List<TimeSpan> effortTimes = GetHabitEfforts(habitName);
         foreach(TimeSpan effortTime in effortTimes)
         {
             sum += effortTime;
@@ -12,7 +12,7 @@ class HabitTrack
         return sum;
     }
 
-    static List<TimeSpan> GetHabitEfforts(int habitId)
+    static List<TimeSpan> GetHabitEfforts(string habitName)
     {
         using var connection = Database.GetConnection();
 
@@ -20,9 +20,9 @@ class HabitTrack
         command.CommandText = """
             SELECT effort_time
             FROM commits
-            WHERE habit_id = $habbit_id;
+            WHERE habit_id = (SELECT id FROM habits WHERE name = $habit_name);
         """;
-        command.Parameters.AddWithValue("$habbit_id", habitId.ToString());
+        command.Parameters.AddWithValue("$habit_name", habitName);
 
         var habitTimes = new List<TimeSpan>();
         using var reader = command.ExecuteReader();
@@ -114,10 +114,10 @@ class HabitTrack
         Console.Write($"{emptySpace} ]");
     }
 
-    static Dictionary<DateTime, TimeSpan> GetCommitSample(int habitId)
+    static Dictionary<DateTime, TimeSpan> GetCommitSample(string habitName)
     {
-        var allCommits = CommitTable.GetOfHabit(habitId);
-        allCommits.Sort((x, y) => DateTime.Compare(x.CommitTime, y.CommitTime));
+        var allCommits = CommitTable.GetOfHabit(habitName);
+        allCommits.Sort((x, y) => DateTime.Compare(x.CommitDate, y.CommitDate));
         allCommits.Reverse();
 
         // debug
@@ -126,7 +126,7 @@ class HabitTrack
             for (int j = 0; j < allCommits.Count; j++)
             {
                 Console.WriteLine($"[DEBUG] allCommits[{j}].Message: {allCommits[j].Message}");
-                Console.WriteLine($"[DEBUG] allCommits[{j}].CommitTime: {allCommits[j].CommitTime}");
+                Console.WriteLine($"[DEBUG] allCommits[{j}].CommitDate: {allCommits[j].CommitDate}");
             }
         # endif
 
@@ -136,7 +136,7 @@ class HabitTrack
         }
 
         var samples = new Dictionary<DateTime, TimeSpan>{
-            {allCommits.First().CommitTime, allCommits.First().EffortTime}
+            {allCommits.First().CommitDate, allCommits.First().EffortTime}
         };
 
         # if DEBUG
@@ -147,7 +147,7 @@ class HabitTrack
         {
             # if DEBUG
                 Console.WriteLine($"[DEBUG] commit: {commit.EffortTime}");
-                Console.WriteLine($"[DEBUG] commit: {commit.CommitTime}");
+                Console.WriteLine($"[DEBUG] commit: {commit.CommitDate}");
                 Console.WriteLine($"[DEBUG] commit: {commit.Message}");
             # endif
             if (first)
@@ -167,7 +167,7 @@ class HabitTrack
                 Console.WriteLine($"[DEBUG] Value: {samples[k]}");
             # endif
 
-            if (k.Date == commit.CommitTime.Date)
+            if (k.Date == commit.CommitDate.Date)
             {
                 # if DEBUG
                     Console.WriteLine($"[DEBUG] added: {commit.EffortTime}");
@@ -176,7 +176,7 @@ class HabitTrack
             }
             else
             {
-                samples.Add(commit.CommitTime, commit.EffortTime);
+                samples.Add(commit.CommitDate, commit.EffortTime);
             }
 
             if (samples.Count == 2)
@@ -203,10 +203,10 @@ class HabitTrack
         return samples;
     }
 
-    public static double GetRate(int habitId)
+    public static double GetRate(string habitName)
     {
         Dictionary<DateTime, TimeSpan> samples;
-        samples = GetCommitSample(habitId);
+        samples = GetCommitSample(habitName);
         var day1 = samples.Last().Key;
         var day2 = samples.First().Key;
         var effort1 = samples.Last().Value;
@@ -220,18 +220,17 @@ class HabitTrack
         # endif
         double rate = deltaHours/deltaDays;
 
-        double goal = HabitTable.Get(habitId).HourGoal;
-        // Judgement(rate, goal);
+        double goal = HabitTable.Get(habitName).HourGoal;
 
         return rate;
     }
 
-    public static int GetStreak(int habitId)
+    public static int GetStreak(string habitName)
     {
         int streakCount = 0;
-        var allCommits = CommitTable.GetOfHabit(habitId);
+        var allCommits = CommitTable.GetOfHabit(habitName);
         allCommits.Sort(
-            (x, y) => DateTime.Compare(x.CommitTime, y.CommitTime)
+            (x, y) => DateTime.Compare(x.CommitDate, y.CommitDate)
         );
         allCommits.Reverse();
 
@@ -241,10 +240,10 @@ class HabitTrack
             # if DEBUG
                 Console.WriteLine($"[DEBUG] are we going from present to the past?");
                 Console.WriteLine($"[DEBUG] streakDay: {streakDay}");
-                Console.WriteLine($"[DEBUG] commit.CommitTime: {commit.CommitTime}");
+                Console.WriteLine($"[DEBUG] commit.CommitDate: {commit.CommitDate}");
             # endif
 
-            if(commit.CommitTime.Date == streakDay.AddDays(-streakCount).Date)
+            if(commit.CommitDate.Date == streakDay.AddDays(-streakCount).Date)
             {
                 streakCount++;
                 # if DEBUG
@@ -252,55 +251,12 @@ class HabitTrack
                 # endif
             }
             else if (
-                commit.CommitTime.Date != streakDay.AddDays(-streakCount + 1).Date
+                commit.CommitDate.Date != streakDay.AddDays(-streakCount + 1).Date
             )
             {
                 break;
             }
         }
-        // StreakJudgement(streakCount); // configurable? necessary?
-
         return streakCount;
     }
-
-    // // DUMBEST ALGORITHMS KNOWN TO MAN BELOW vvvvvvvv
-    // static void StreakJudgement(double value)
-    // {
-    //     // https://jamesclear.com/new-habit
-    //     switch (value)
-    //     {
-    //         case 0:
-    //             Console.Write("🔴");
-    //             break;
-    //         case <5:
-    //             Console.Write("⭐");
-    //             break;
-    //         case <30:
-    //             Console.Write("🌟");
-    //             break;
-    //         default:
-    //             int rep = Convert.ToInt32(value) % 5;
-    //             rep = rep == 0 ? 1 : rep;
-    //             for (int i = 0; i < rep; i++)
-    //             {
-    //                 Console.Write("💫");
-    //             }
-    //             break;
-    //     }
-    // }
-    //
-    // static void Judgement(double value, double goal)
-    // {
-    //     // could be configurable
-    //     // could be a switch case
-    //     // lua scripts?
-    //     if (value >= goal)
-    //     {
-    //         Console.WriteLine("✨");
-    //     }
-    //     else
-    //     {
-    //         Console.WriteLine("🫤");
-    //     }
-    // }
 }

@@ -69,47 +69,47 @@ class HabitTable
         Database.ExecuteCommand(changeHourGoal, parameters);
     }
 
-    public static int GetId(string name)
-    {
-        using var connection = Database.GetConnection();
-        var command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT id
-            FROM habits
-            WHERE name = $name;
-        """;
+    // public static int GetId(string name)
+    // {
+    //     using var connection = Database.GetConnection();
+    //     var command = connection.CreateCommand();
+    //     command.CommandText = """
+    //         SELECT id
+    //         FROM habits
+    //         WHERE name = $name;
+    //     """;
+    //
+    //     command.Parameters.AddWithValue("$name", name);
+    //
+    //     // is it useful?
+    //     var noHabit = new IndexOutOfRangeException("No habit of given name!");
+    //     try
+    //     {
+    //         var reader = command.ExecuteReader();
+    //
+    //         while (reader.Read())
+    //         {
+    //             return reader.GetInt32(0);
+    //         }
+    //     }
+    //     catch (SqliteException)
+    //     {
+    //         throw noHabit;
+    //     }
+    //     throw noHabit;
+    // }
 
-        command.Parameters.AddWithValue("$name", name);
-
-        // is it useful?
-        var noHabit = new IndexOutOfRangeException("No habit of given name!");
-        try
-        {
-            var reader = command.ExecuteReader();
-
-            while (reader.Read())
-            {
-                return reader.GetInt32(0);
-            }
-        }
-        catch (SqliteException)
-        {
-            throw noHabit;
-        }
-        throw noHabit;
-    }
-
-    public static Habit Get(int habitId)
+    public static Habit Get(string habitName)
     {
         using var connection  = Database.GetConnection();
         var command = connection.CreateCommand();
         command.CommandText = """
             SELECT *
             FROM habits
-            WHERE id = $habit_id;
+            WHERE id = (SELECT id FROM habits WHERE name = $habit_name)
         """;
 
-        command.Parameters.AddWithValue("$habit_id", habitId.ToString());
+        command.Parameters.AddWithValue("$habit_name", habitName);
 
         using var reader = command.ExecuteReader();
         while (reader.Read())

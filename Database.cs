@@ -3,16 +3,20 @@
 
 class Database
 {
+    private static string? _dbPath;
+
     public static SqliteConnection GetConnection()
     {
-        var connection = new SqliteConnection("Data source=stakes.db");
+        var connection = new SqliteConnection($"Data source={_dbPath}");
         connection.Open();
 
         return connection;
     }
 
-    public static void Initialize()
+    public static void Initialize(string dbPath)
     {
+        _dbPath = dbPath;
+
         using var connection = GetConnection();
         var emptyDict = new Dictionary<string, string>{};
 

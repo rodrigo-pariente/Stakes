@@ -25,7 +25,7 @@ At the end of the day, see your report:
 
 `$ Stakes report`
 
-![Stakes beautiful habit tracking report](https://github.com/rodrigo-pariente/stakes/blob/main/images/stakes-report.png)
+<img src="https://github.com/rodrigo-pariente/stakes/blob/main/images/stakes-report.png" alt="Stakes beautiful habit tracking report"/>
 
 See more of the **Stakes** capabilities with:
 
