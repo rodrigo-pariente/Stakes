@@ -1,57 +1,49 @@
+using Stakes.Core;
+using Stakes.Models;
+
+
 class CommitTable
 {
-    public record Commit(
-        int Id,
-        string HabitName,
-        TimeSpan EffortTime,
-        DateTime CommitDate,
-        string Message
-    );
-
     public static void Add(
         string habitName,
-        string effortTime,
-        string commitDate,
-        string message = ""
+        string time,
+        string date,
+        string message
     )
     {
-
         string command = """
             INSERT INTO commits (
                 habit_id,
-                effort_time,
-                commit_time,
+                time,
+                date,
                 message
             )
             VALUES (
-                (SELECT id FROM habits WHERE name = $habitName),
-                $effortTime,
-                $commitDate,
+                (
+                    SELECT id
+                    FROM habits
+                    WHERE name = $habitName
+                ),
+                $time,
+                $date,
                 $message
             );
         """;
 
         var parameters = new Dictionary<string, string>{
             {"$habitName", habitName},
-            {"$effortTime", effortTime},
-            {"$commitDate", commitDate},
+            {"$time", time},
+            {"$date", date},
             {"$message", message}
         };
 
-        # if DEBUG
-            Console.WriteLine($"[DEBUG] habitName: {habitName}");
-            Console.WriteLine($"[DEBUG] effortTime: {effortTime}");
-            Console.WriteLine($"[DEBUG] commitDate: {commitDate}");
-            Console.WriteLine($"[DEBUG] message: {message}");
-        # endif
         try
         {
             Database.ExecuteCommand(command, parameters);
         }
         catch (Microsoft.Data.Sqlite.SqliteException)
         {
-            throw new IndexOutOfRangeException("No habit of given name!");
-            // this is so unclassy omg
+            throw new Exceptions.HabitNotFoundException(habitName);
         }
     }
 
@@ -60,7 +52,11 @@ class CommitTable
         using var connection = Database.GetConnection();
         var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT commits.id, habits.name, effort_time, commit_time, message
+            SELECT commits.id,
+                habits.name,
+                time,
+                date,
+                message
             FROM commits
             INNER JOIN habits
             ON habits.id = commits.habit_id
@@ -80,8 +76,7 @@ class CommitTable
             );
             return commit;
         }
-        // will it ever happen?
-        throw new IndexOutOfRangeException("No quote of commit id!");
+        throw new Exceptions.CommitNotFoundException(commitId);
     }
 
     public static List<Commit> GetAll()
@@ -89,7 +84,11 @@ class CommitTable
         using var connection = Database.GetConnection();
         var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT commits.id, habits.name, effort_time, commit_time, message
+            SELECT commits.id,
+                habits.name,
+                time,
+                date,
+                message
             FROM commits
             INNER JOIN habits
             ON habits.id = commits.habit_id
@@ -114,14 +113,18 @@ class CommitTable
         return commits;
     }
 
-    public static List<Commit> GetOfHabit(string habitName)
+    public static List<Commit> GetByHabit(string habitName)
     {
         using var connection = Database.GetConnection();
         var command = connection.CreateCommand();
         command.CommandText = """
             SELECT *
             FROM commits
-            WHERE habit_id = (SELECT id FROM habits WHERE name = $habit_name)
+            WHERE habit_id = (
+                SELECT id
+                FROM habits
+                WHERE name = $habit_name
+            );
         """;
         command.Parameters.AddWithValue("habit_name", habitName);
 
@@ -145,94 +148,117 @@ class CommitTable
         }
         catch (Microsoft.Data.Sqlite.SqliteException)
         {
-            throw new IndexOutOfRangeException("No habit of given name!");
+            throw new Exceptions.HabitNotFoundException(habitName);
         }
 
         return commits;
     }
 
-    public static void Update(
+    public static void UpdateHabit(
         int commitId,
-        string habitName = "",
-        string effortTime = "",
-        string commitDate = "",
-        string message = ""
+        string habitName
     )
     {
-        using var connection = Database.GetConnection();
-
-        Commit commit = Get(commitId);
-        # if DEBUG
-            Console.WriteLine($"[DEBUG] commit.HabitName: {commit.HabitName}");
-            Console.WriteLine($"[DEBUG] commit.EffortTime: {commit.EffortTime}");
-            Console.WriteLine($"[DEBUG] commit.CommitDate: {commit.CommitDate}");
-            Console.WriteLine($"[DEBUG] commit.Message: {commit.Message}");
-
-            Console.WriteLine($"[DEBUG] habitName: {habitName}");
-            Console.WriteLine($"[DEBUG] effortTime: {effortTime}");
-            Console.WriteLine($"[DEBUG] commitDate: {commitDate}");
-            Console.WriteLine($"[DEBUG] message: {message}");
-        # endif
-
-        var command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT commits.id, habits.name, effort_time, commit_time, message
-            FROM commits
-            INNER JOIN habits
-            ON habits.id = commits.habit_id
-            WHERE commits.id = $commit_id
-        """;
-
-        command.Parameters.AddWithValue(
-            "$commit_id", commitId.ToString()
-        );
-        using var reader = command.ExecuteReader();
-
-        while (reader.Read())
-        {
-            if (habitName.Equals(string.Empty))
-            {
-                habitName = reader.GetString(1);
-            }
-            if (effortTime.Equals(string.Empty))
-            {
-                effortTime = reader.GetString(2);
-            }
-            if (commitDate.Equals(string.Empty))
-            {
-                commitDate = reader.GetString(3);
-            }
-            if (message.Equals(string.Empty))
-            {
-                message = reader.GetString(4);
-            }
-        }
-
-        string cmd = """
+        string command = """
             UPDATE commits
-            SET habit_id = (SELECT id FROM habits WHERE name = $habit_name),
-                effort_time = $effort_time,
-                commit_time = $commit_time,
-                message = $message
-            WHERE id = $commit_id
+            SET habit_id = (
+                SELECT id
+                FROM habits
+                WHERE name = $habit_name
+            )
+            WHERE id = $commit_id;
         """;
 
         var parameters = new Dictionary<string, string>{
             {"$habit_name", habitName},
-            {"$effort_time", effortTime},
-            {"$commit_time", commitDate},
+            {"$commit_id", commitId.ToString()}
+        };
+
+        try
+        {
+            Database.ExecuteCommand(command, parameters);
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException)
+        {
+            throw new Exceptions.CommitNotFoundException(commitId);
+        }
+    }
+
+    public static void UpdateTime(
+        int commitId,
+        string time
+    )
+    {
+        string command = """
+            UPDATE commits
+            SET time = $time
+            WHERE id = $commit_id
+        """;
+
+        var parameters = new Dictionary<string, string>{
+            {"$time", time},
+            {"$commit_id", commitId.ToString()}
+        };
+
+        try
+        {
+            Database.ExecuteCommand(command, parameters);
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException)
+        {
+            throw new Exceptions.CommitNotFoundException(commitId);
+        }
+    }
+
+    public static void UpdateDate(
+        int commitId,
+        string date
+    )
+    {
+        string command = """
+            UPDATE commits
+            SET date = $date
+            WHERE id = $commit_id
+        """;
+
+        var parameters = new Dictionary<string, string>{
+            {"$date", date},
+            {"$commit_id", commitId.ToString()}
+        };
+
+        try
+        {
+            Database.ExecuteCommand(command, parameters);
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException)
+        {
+            throw new Exceptions.CommitNotFoundException(commitId);
+        }
+    }
+
+    public static void UpdateMessage(
+        int commitId,
+        string message 
+    )
+    {
+        string command = """
+            UPDATE commits
+            SET message = $message
+            WHERE id = $commit_id
+        """;
+
+        var parameters = new Dictionary<string, string>{
             {"$message", message},
             {"$commit_id", commitId.ToString()}
         };
 
-
         try
         {
-            Database.ExecuteCommand(cmd, parameters);
+            Database.ExecuteCommand(command, parameters);
         }
         catch (Microsoft.Data.Sqlite.SqliteException)
         {
-            throw new IndexOutOfRangeException("ERROR: no commit of given id");
+            throw new Exceptions.CommitNotFoundException(commitId);
         }
     }
 
@@ -252,7 +278,7 @@ class CommitTable
         }
         catch (Microsoft.Data.Sqlite.SqliteException)
         {
-            throw new IndexOutOfRangeException("ERROR: no commit of given id");
+            throw new Exceptions.CommitNotFoundException(commitId);
         }
     }
 }

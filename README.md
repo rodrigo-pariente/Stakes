@@ -1,17 +1,20 @@
 # Stakes
 
-A cli habit tracker written in C# with focus on pretty printing.
+<p align="center">
+  <img src="https://github.com/rodrigo-pariente/stakes/blob/main/images/logo.png" alt="Stakes logo"/>
+  <b>Cli habit tracker, simple and pretty, written in C#.</b>
+</p>
 
 
 ## How To Use
 
 You can start to track a habit using:
 
-`$ Stakes track gym`
+`$ Stakes habit add gym`
 
 And log your efforts:
 
-`$ Stakes commit gym 1h -m "Hard work. Leg day."`
+`$ Stakes commit add gym 1h -m "Hard work. Leg day."`
 
 Add an encouraging message:
 
@@ -34,18 +37,25 @@ See more of the **Stakes** capabilities with:
 > [!NOTE]
 > Stakes uses SQLite for its databases, allowing it to have a fast, extensible and reliable storage.
 
+
 ## Compiling From Source
 
 Stakes depends on the following nuget packages:
 
 - Microsoft.Data.Sqlite
 - System.CommandLine
+- Pastel
 
+
+### Linux
+
+Requires the **.NET SDK** installed on your system.
 
 ```bash
-git clone https://github.com/rodrigo-pariente/Stakes # get the source
-cd Stakes/
-dotnet build -c Release
+git clone https://github.com/rodrigo-pariente/Stakes
+cd Stakes/scripts/
+./build
+./install # may require sudo privileges
 ```
 
 
