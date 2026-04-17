@@ -1,9 +1,9 @@
 # Stakes
 
 <p align="center">
-  <img src="https://github.com/rodrigo-pariente/stakes/blob/main/images/logo.png" alt="Stakes logo"/>
-  <b>Cli habit tracker, simple and pretty, written in C#.</b>
+  <img src="https://github.com/rodrigo-pariente/stakes/blob/main/images/logo.png" alt="Stakes logo" width=250 />
 </p>
+<p align="center"><b>Cli habit tracker, simple and pretty, written in C#.</b></p>
 
 
 ## How To Use
@@ -55,7 +55,7 @@ Requires the **.NET SDK** installed on your system.
 git clone https://github.com/rodrigo-pariente/Stakes
 cd Stakes/scripts/
 ./build
-./install # may require sudo privileges
+sudo ./install
 ```
 
 
