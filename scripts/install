@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Check if script is run with sudo
 if [ "$EUID" -ne 0 ]; then
     echo -e "\e[31mThis script requires root privileges.\e[0m"
