@@ -8,9 +8,9 @@ class Config
 {
     public static string applicationPath = Path.Combine(
         Environment.GetFolderPath(
-            Environment.SpecialFolder.CommonApplicationData
+            Environment.SpecialFolder.UserProfile
         ),
-        "Stakes/"
+        ".Stakes/"
     );
 
     public static string configurationPath = Path.Combine(

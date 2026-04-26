@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 # Check if script is run with sudo
 if [ "$EUID" -ne 0 ]; then
     echo -e "\e[31mThis script requires root privileges.\e[0m"
@@ -17,14 +15,14 @@ REAL_HOME=$(eval echo "~$REAL_USER")
 # Path of the freshly build Stakes
 build_path="../build"
 
-# Path to store the binary
-bin_path="/usr/share/Stakes"
-
 # Path to store the database and configuration
-data_path="$REAL_HOME/.local/share/Stakes"
+data_path="$REAL_HOME/.Stakes"
 
-# To add `stakes` to path
+# User binaries path
 usr_bin_path="$REAL_HOME/.local/bin"
+
+# Path to store the binary
+bin_path="$usr_bin_path"
 
 
 # Install
@@ -33,6 +31,14 @@ echo "Initializing application folder..."
 
 echo "Moving application to $bin_path..."
 mv -- "$build_path"/* "$bin_path/"
+
+if sed -i -- "s|HOME_PATH|$data_path|g" ../data/config.json; then
+  echo "Updated config.json with real data path"
+else
+  echo "Couldn't update config.json with real data path"
+  echo "Please, update your configuration manually at"
+  echo -- "$data_path/config.json"
+fi
 
 echo "Moving application data files to $data_path..."
 [[ ! -d "$data_path" ]] && mkdir -- "$data_path" || true
@@ -46,8 +52,10 @@ echo "Fixing ownership..."
 chown -R "$REAL_USER:$REAL_USER" "$data_path"
 chown -R "$REAL_USER:$REAL_USER" "$usr_bin_path"
 
-echo -e "Symbolic linking \e[34mStakes\e[0m into $usr_bin_path..."
-echo
-ln -sf -- "$bin_path/Stakes" "$usr_bin_path/stakes"
+if [[ -d "$usr_bin_path" ]]; then
+  echo -e "Symbolic linking \e[34mStakes\e[0m into $usr_bin_path..."
+  echo
+  ln -sf -- "$bin_path/Stakes" "$usr_bin_path/stakes"
+fi
 
 echo -e "\e[32mInstallation finished 🙂\e[0m"
