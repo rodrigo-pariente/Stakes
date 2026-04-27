@@ -1,10 +1,9 @@
 namespace Stakes.Core;
-using Stakes.Models;
 
 
 class InitializeApplication
 {
-    public static void InitializeApplicationFolder(Configuration config)
+    public static void InitializeApplicationFolder()
     {
         // Create stakes folder if does not exist
         if (!Directory.Exists(Config.applicationPath))
@@ -28,6 +27,6 @@ class InitializeApplication
         }
 
         // Guarantee the database existence and conformity
-        Database.Initialize(config.DatabasePath!);
+        Database.Initialize();
     }
 }

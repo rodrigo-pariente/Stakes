@@ -1,6 +1,5 @@
 
 {
-  "DatabasePath": "/usr/share/Stakes/stakes.db",
   "HourGoal": 2,
   "PerDayGoal": 1,
   "ReportStyle": "+name,+progress,+streak",

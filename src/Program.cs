@@ -35,7 +35,7 @@ class Program
 
         // Initialize Stakes application folder
         SafeRun(() =>
-            InitializeApplication.InitializeApplicationFolder(config)
+            InitializeApplication.InitializeApplicationFolder()
         );
 
 

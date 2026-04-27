@@ -36,9 +36,7 @@ class Config
     {
         if (!File.Exists(configurationPath))
         {
-            return new Configuration(
-                Path.Combine(applicationPath, "stakes.db")
-            );
+            return new Configuration();
         }
 
         try
@@ -50,9 +48,7 @@ class Config
         }
         catch(FileNotFoundException)
         {
-            return new Configuration(
-                Path.Combine(applicationPath, "stakes.db")
-            );
+            return new Configuration();
         }
     }
 }

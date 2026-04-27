@@ -2,7 +2,6 @@ namespace Stakes.Models;
 
 
 public record Configuration(
-    string? DatabasePath = null,
     double HourGoal = 1D,
     int PerDayGoal = 1,
     string ReportStyle = "+name,+progress,+rate,+streak",

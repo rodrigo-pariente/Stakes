@@ -4,14 +4,17 @@ using Stakes.Core;
 
 class Database
 {
-    private static string? _databasePath;
+    public static readonly string databasePath = Path.Combine(
+        Config.applicationPath,
+        "stakes.db"
+    );
 
     public static SqliteConnection GetConnection()
     {
         try
         {
             var connection = new SqliteConnection(
-                $"Data source={_databasePath}"
+                $"Data source={databasePath}"
             );
             connection.Open();
 
@@ -45,10 +48,8 @@ class Database
         command.ExecuteNonQuery();
     }
 
-    public static void Initialize(string databasePath)
+    public static void Initialize()
     {
-        _databasePath = databasePath;
-
         using var connection = GetConnection();
 
         const string habitsTableDefinition = """
