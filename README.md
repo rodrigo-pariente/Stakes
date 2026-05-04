@@ -54,8 +54,8 @@ Requires the **.NET SDK** installed on your system.
 ```bash
 git clone https://github.com/rodrigo-pariente/Stakes
 cd Stakes/scripts/
-./build
-sudo ./install
+./build.sh
+sudo ./install.sh
 ```
 
 
